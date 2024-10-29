@@ -3,9 +3,6 @@
 from asyncio import timeout
 from datetime import timedelta
 import logging
-
-import asyncio
-import logging
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry

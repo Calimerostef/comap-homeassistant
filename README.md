@@ -8,7 +8,6 @@ It will set up :
 * 1 device for the main housing  with the following entities :
     * 1 sensor entity providing informations about the house
     * 1 sensor entity providing informations about the comap network bridge
-    * a select entity allowing to change the schedule for all zone at once
     * a select entity to choose active program
     * a switch do turn on/of the heating system at a home level
     * a switch to manage absence mode
@@ -29,8 +28,8 @@ Features :
 * Thermostat zone: set temperature, current temperature and humidity
 * Pilot wire zone: set preset mode
 * Set home away, home back for housing
-* Set schedule per zone or for all zones at once
-* polling interval is customizable for sensors and for selects (schedules)
+* Set schedule per zone
+* Set program
 
 Does not support:
 
@@ -39,7 +38,6 @@ Does not support:
 
 ## Current limitations
 
-* Polling interval is not customizable for climate entities (30 sec for all climate entities)
 * Any manual instruction is set for 2 hours by default
 * Your applied schedule will cancel any temporary orders - this is Comap behavior
 
@@ -49,7 +47,6 @@ Does not support:
 You can deploy the component to custom_components directory in you home assistant config directory, or use HACS by pointing to this repository.
 
 Setup through the Home Assistant Integration menu - you will need your Comap username and password.
-During setup, you'll be able to choose polling interval for sensors and selects
 
 ## Unsupported features
 
