@@ -1,4 +1,4 @@
-# hass-comapsmarthome
+# Comap Smatr Home for Home Assistant
 A Home Assistant custom component for comap smart home thermostats (qivivo)
 
 ## Supported features
