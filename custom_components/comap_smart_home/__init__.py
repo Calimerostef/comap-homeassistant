@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import ComapClient
-from .const import DOMAIN
+from .const import DOMAIN, COMAP_SENSOR_SCAN_INTERVAL
 
 from homeassistant.const import (
     CONF_USERNAME,
@@ -19,7 +19,7 @@ from homeassistant.const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor", "climate", "switch", "select", "binary_sensor"]
+PLATFORMS = ["sensor", "climate", "switch", "select", "binary_sensor", "button"]
 
 
 async def async_setup_entry(
@@ -29,6 +29,9 @@ async def async_setup_entry(
     
     config = entry.data
     api_client = ComapClient(username=config[CONF_USERNAME], password=config[CONF_PASSWORD])
+
+    refresh_interval = entry.options.get(COMAP_SENSOR_SCAN_INTERVAL, 5)
+    _LOGGER.warning(refresh_interval)
 
     # Fonction qui récupère les données de l'API
     async def async_fetch_data():
@@ -54,7 +57,7 @@ async def async_setup_entry(
         logging.getLogger(__name__),
         name="Comap Smart Home Data",
         update_method=async_fetch_data,
-        update_interval=timedelta(minutes=5),
+        update_interval=timedelta(minutes=refresh_interval),
     )
 
     # Charge les données pour la première fois

@@ -1,0 +1,27 @@
+{
+    "config": {
+        "flow_title": "{name}",
+        "step": {
+            "user": {
+                "title": "Register your ComapSmartHome account.",
+                "data": {
+                    "username": "Username",
+                    "password": "Password",
+                    "comap_sensor_scan_interval": "Data polling interval (minutes)"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Impossible to establish connection, check credentials."
+        }
+    },
+    "options": {
+        "step": {
+            "user": {
+                "data": {
+                    "comap_sensor_scan_interval": "Data polling interval (minutes)"
+                }
+            }
+        }
+    }
+}

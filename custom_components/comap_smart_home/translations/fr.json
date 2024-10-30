@@ -1,0 +1,27 @@
+{
+    "config": {
+        "flow_title": "{name}",
+        "step": {
+            "user": {
+                "title": "Connectez votre compte ComapSmartHome.",
+                "data": {
+                    "username": "Login",
+                    "password": "Mot de passe",
+                    "comap_sensor_scan_interval": "Intervalle de rafraîchissement des données (minutes)"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Connexion impossible, vérifiez vos identifiants."
+        }
+    },
+    "options": {
+        "step": {
+            "user": {
+                "data": {
+                    "comap_sensor_scan_interval": "Intervalle de rafraîchissement des données (minutes)"
+                }
+            }
+        }
+    }
+}
