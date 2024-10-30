@@ -97,11 +97,19 @@ class ComapClient (object):
                 r = await client.delete(url=url, headers=headers)
             elif mode == "get":
                 r = await client.get(url=url, headers=headers, params=params)
+            elif mode == "patch":
+                _LOGGER.warning(url)
+                _LOGGER.warning(headers)
+                _LOGGER.warning(json)
+                r = await client.patch(url=url, headers=headers, json=json)
             r.raise_for_status()
             return r.json()
 
     async def async_post(self, url, headers=None, json={}):
         return await self.async_request("post", url, headers, json=json)
+    
+    async def async_patch(self, url, headers=None, json={}):
+        return await self.async_request("patch", url, headers, json=json)
 
     async def async_get(self, url, headers=None, params={}):
         return await self.async_request("get", url, headers, params=params)
@@ -174,7 +182,6 @@ class ComapClient (object):
             + zoneid
         )
 
-    
     async def get_housing_connected_objects(self, housing=None):
         """Get a list of all objects in the specified housing"""
         if housing is None:
@@ -268,6 +275,15 @@ class ComapClient (object):
         return await self.async_get(
             self._BASEURL + "thermal/housings/" + housing + "/custom-temperatures"
         )
+    
+    async def set_custom_temperature(self, temp_id, temp_value, housing=None):
+        if housing is None:
+            housing = self.housing
+        url = self._BASEURL + "thermal/housings/" + housing + "/custom-temperatures"
+        json = {
+            temp_id: temp_value
+        }
+        return await self.async_patch(url=url,json=json)
 
     async def get_programs(self, housing=None):
         """This returns the active program and list of schedules for a housing."""

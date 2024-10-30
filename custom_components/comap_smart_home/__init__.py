@@ -19,7 +19,7 @@ from homeassistant.const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor", "climate", "switch", "select", "binary_sensor", "button"]
+PLATFORMS = ["sensor", "climate", "switch", "select", "binary_sensor", "button", "number"]
 
 
 async def async_setup_entry(
@@ -31,7 +31,6 @@ async def async_setup_entry(
     api_client = ComapClient(username=config[CONF_USERNAME], password=config[CONF_PASSWORD])
 
     refresh_interval = entry.options.get(COMAP_SENSOR_SCAN_INTERVAL, 5)
-    _LOGGER.warning(refresh_interval)
 
     # Fonction qui récupère les données de l'API
     async def async_fetch_data():
@@ -47,6 +46,45 @@ async def async_setup_entry(
             data["schedules"] = await api_client.get_schedules()
             data["programs"] = await api_client.get_programs()
             data["active_program"] = await api_client.get_active_program()
+            data["comap_temperatures"] = [
+                {
+                    "id": "night",
+                    "name": "Nuit",
+                    "value": data["temperatures"]["night"]
+                },
+                {
+                    "id": "away",
+                    "name": "Absence",
+                    "value": data["temperatures"]["away"]
+                },
+                {
+                    "id": "frost_protection",
+                    "name": "Hors Gel",
+                    "value": data["temperatures"]["frost_protection"]
+                },
+                {
+                    "id": "presence_1",
+                    "name": "Présence 1",
+                    "value": data["temperatures"]["connected"]["presence_1"]
+                },
+                {
+                    "id": "presence_2",
+                    "name": "Présence 2",
+                    "value": data["temperatures"]["connected"]["presence_2"]
+                },
+                {
+                    "id": "presence_3",
+                    "name": "Présence 3",
+                    "value": data["temperatures"]["connected"]["presence_3"]
+                },
+                {
+                    "id": "presence_4",
+                    "name": "Présence 4",
+                    "value": data["temperatures"]["connected"]["presence_4"]
+
+                }
+            ]
+
             return data
         except Exception as err:
             raise UpdateFailed(f"Error fetching data: {err}")
