@@ -12,6 +12,7 @@ It will set up :
     * a switch do turn on/of the heating system at a home level
     * a switch to manage absence mode
     * a switch to manage holiday mode
+    * a button to force data refresh
 
 * 1 device per zone with the following sensors :
     * a select entity allowing to change the schedule at a zone level
@@ -30,6 +31,7 @@ Features :
 * Set home away, home back for housing
 * Set schedule per zone
 * Set program
+* Polling interval is customizable during istallation and can be changed using component configuration (a Home Assistant restart will be required after configuration change)
 
 Does not support:
 
