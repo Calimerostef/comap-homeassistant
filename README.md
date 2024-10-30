@@ -13,6 +13,7 @@ It will set up :
     * a switch to manage absence mode
     * a switch to manage holiday mode
     * a button to force data refresh
+    * 1 number entity per preset temperature allowing to modify them within Home Assistant
 
 * 1 device per zone with the following sensors :
     * a select entity allowing to change the schedule at a zone level
