@@ -47,14 +47,14 @@ def ModeToIcon (mode):
     if mode == "off":
         return "mdi:power-standby"
     elif mode == "away":
-        return "mdi:home-export-outline"
+        return "mdi:account-arrow-right"
     elif mode == "comfort -1":
-        return "mdi:weather-sunny"
+        return "mdi:sofa"
     elif mode == "comfort -2":
-        return "mdi:weather-sunny"
+        return "mdi:sofa"
     elif mode == "eco":
-        return "mdi:weather-night"
+        return "mdi:leaf"
     elif mode == "comfort":
-        return "mdi:weather-sunny"
+        return "mdi:sofa"
     else:
         return "mdi:help"
