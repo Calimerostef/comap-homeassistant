@@ -53,7 +53,7 @@ def ModeToIcon (mode):
     elif mode == "comfort -2":
         return "mdi:weather-sunny"
     elif mode == "eco":
-        return "mdi:moon-waning-crescent"
+        return "mdi:weather-night"
     elif mode == "comfort":
         return "mdi:weather-sunny"
     else:
