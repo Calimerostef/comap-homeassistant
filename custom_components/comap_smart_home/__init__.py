@@ -50,37 +50,44 @@ async def async_setup_entry(
                 {
                     "id": "night",
                     "name": "Nuit",
-                    "value": data["temperatures"]["night"]
+                    "value": data["temperatures"]["night"],
+                    "icon": "mdi:weather-night"
                 },
                 {
                     "id": "away",
                     "name": "Absence",
-                    "value": data["temperatures"]["away"]
+                    "value": data["temperatures"]["away"],
+                    "icon": "mdi:home-export-outline"
                 },
                 {
                     "id": "frost_protection",
                     "name": "Hors Gel",
-                    "value": data["temperatures"]["frost_protection"]
+                    "value": data["temperatures"]["frost_protection"],
+                    "icon": "mdi:snowflake"
                 },
                 {
                     "id": "presence_1",
                     "name": "Présence 1",
-                    "value": data["temperatures"]["connected"]["presence_1"]
+                    "value": data["temperatures"]["connected"]["presence_1"],
+                    "icon": "mdi:numeric-1-circle-outline"
                 },
                 {
                     "id": "presence_2",
                     "name": "Présence 2",
-                    "value": data["temperatures"]["connected"]["presence_2"]
+                    "value": data["temperatures"]["connected"]["presence_2"],
+                    "icon": "mdi:numeric-2-circle-outline"
                 },
                 {
                     "id": "presence_3",
                     "name": "Présence 3",
-                    "value": data["temperatures"]["connected"]["presence_3"]
+                    "value": data["temperatures"]["connected"]["presence_3"],
+                    "icon": "mdi:numeric-3-circle-outline"
                 },
                 {
                     "id": "presence_4",
                     "name": "Présence 4",
-                    "value": data["temperatures"]["connected"]["presence_4"]
+                    "value": data["temperatures"]["connected"]["presence_4"],
+                    "icon": "mdi:numeric-4-circle-outline"
 
                 }
             ]

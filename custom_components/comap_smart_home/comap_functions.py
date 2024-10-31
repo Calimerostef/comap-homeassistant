@@ -35,3 +35,26 @@ def get_zone_infos(zone_id,thermal_details):
         if zone.get("id") == zone_id:
             retour = zone
     return retour
+
+def DateToHHMM (date_str):
+    time_zone = ZoneInfo("Europe/Paris")
+    date = datetime.fromisoformat(date_str)
+    date_paris = date.astimezone(time_zone)
+    heure_minutes = date_paris.strftime("%H:%M")
+    return heure_minutes
+
+def ModeToIcon (mode):
+    if mode == "off":
+        return "mdi:power-standby"
+    elif mode == "away":
+        return "mdi:home-export-outline"
+    elif mode == "comfort -1":
+        return "mdi:weather-sunny"
+    elif mode == "comfort -2":
+        return "mdi:weather-sunny"
+    elif mode == "eco":
+        return "mdi:moon-waning-crescent"
+    elif mode == "comfort":
+        return "mdi:weather-sunny"
+    else:
+        return "mdi:help"

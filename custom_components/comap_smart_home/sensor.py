@@ -7,7 +7,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.const import PERCENTAGE
 
 from .const import DOMAIN
-from .comap_functions import get_connected_object_zone_infos, get_object_infos, get_now
+from .comap_functions import get_connected_object_zone_infos, get_object_infos, get_now, get_zone_infos, DateToHHMM, ModeToIcon
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,6 +25,11 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         for obj_serial in zone_obj:
             obj_zone_names[obj_serial] = zone.get("title")
             obj_zone_ids[obj_serial] = zone.get("id")
+
+    next_instr = [
+        NextInstructionSensor(coordinator, zone)
+        for zone in zones
+    ]
 
     batt_list = []
     for object in connected_objects:
@@ -48,14 +53,89 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         for device_sensor in connected_objects
     ]
 
-    sensors = batt_sensors + housing_sensors + device_sensors
+    sensors = batt_sensors + housing_sensors + device_sensors + next_instr
 
     async_add_entities(sensors, True)
+
+class NextInstructionSensor(CoordinatorEntity, SensorEntity):
+    def __init__(self, coordinator, zone):
+        super().__init__(coordinator)
+        self.coordinator = coordinator
+        self.housing_id = coordinator.data["housing"].get("id")
+        self.housing_name = coordinator.data["housing"].get("name")
+        self.zone_id = zone.get("id")
+        self.zone_name = self.housing_name + " " + zone.get("title")
+        self.is_pilot_wire = zone.get("set_point_type") == "pilot_wire"
+
+    @property
+    def name(self):
+        return self.zone_name + " Next instruction"
+    
+    @property
+    def icon(self):
+        thermal_details = self.coordinator.data["thermal_details"]
+        zone_data = get_zone_infos(self.zone_id,thermal_details)
+        next_timeslot = zone_data["next_timeslot"]
+        instr = next_timeslot["set_point"]["instruction"]
+        if self.is_pilot_wire:
+            return ModeToIcon(instr)
+        else:
+            if zone_data.get("set_point_type") == "defined_temperature":
+                comap_temperatures = self.coordinator.data["comap_temperatures"]
+                for temp in comap_temperatures:
+                    if temp.get("id") == instr:
+                        return temp.get("icon")
+            return "mdi:help"
+
+    
+    @property
+    def state(self):
+        thermal_details = self.coordinator.data["thermal_details"]
+        zone_data = get_zone_infos(self.zone_id,thermal_details)
+        next_timeslot = zone_data["next_timeslot"]
+        instr = next_timeslot["set_point"]["instruction"]
+        if zone_data.get("set_point_type") == "defined_temperature":
+            comap_temperatures = self.coordinator.data["comap_temperatures"]
+            for temp in comap_temperatures:
+                if temp.get("id") == instr:
+                    instr = temp.get("value")
+        return instr
+    
+    @property
+    def extra_state_attributes(self):
+        attrs = {}
+        thermal_details = self.coordinator.data["thermal_details"]
+        zone_data = get_zone_infos(self.zone_id,thermal_details)
+        next_timeslot = zone_data["next_timeslot"]
+        attrs["next_timeslot"] = DateToHHMM(next_timeslot["begin_at"])
+        attrs["next_instruction"] = next_timeslot["set_point"]["instruction"]
+        return attrs
+    
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            identifiers={
+                # Serial numbers are unique identifiers within a specific domain
+                (DOMAIN, self.zone_id)
+            },
+            name = self.zone_name,
+            manufacturer = "comap",
+            serial_number = self.zone_id
+        )
+    
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self.zone_id + "_next_instruction"
+    
+    
+        
+
 
 class ComapBatterySensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator, batt_sensor):
         super().__init__(coordinator)
-        self._state = batt_sensor.get("voltage_percent")
         self.housing = coordinator.data["housing"].get("id")
         self.sn = batt_sensor.get("serial_number")
         self.model = batt_sensor.get("model")
@@ -70,6 +150,7 @@ class ComapBatterySensor(CoordinatorEntity, SensorEntity):
         self._unique_id = self.housing + "_" + self.zone_id + "_battery_" + self.model + "_"+ self.sn
         self.attrs = {}
         self.coordinator = coordinator
+
 
     @property
     def name(self):
