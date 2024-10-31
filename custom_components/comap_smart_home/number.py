@@ -52,11 +52,14 @@ class ComapCustomTemp(CoordinatorEntity, NumberEntity):
     @property
     def native_value(self):
         comap_temperatures = self.coordinator.data["comap_temperatures"]
-        return self.getTempValue(self.temp_id,comap_temperatures)
+        value = self.getTempValue(self.temp_id,comap_temperatures)
+        self._attr_available = value is not None
+        return value
     
     @property
     def icon(self) -> str:
         return "mdi:thermometer"
+
     
     @property
     def device_info(self) -> DeviceInfo:
