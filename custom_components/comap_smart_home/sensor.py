@@ -1,10 +1,11 @@
 
 import logging
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.const import PERCENTAGE
+from homeassistant.const import PERCENTAGE, DEVICE_CLASS_TIMESTAMP
+
 
 from .const import DOMAIN
 from .comap_functions import get_connected_object_zone_infos, get_object_infos, get_now, get_zone_infos, DateToHHMM, ModeToIcon
@@ -20,11 +21,21 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     zones = themal_details.get("zones")
     obj_zone_names = {}
     obj_zone_ids = {}
+    last_pres = []
     for zone in zones:
         zone_obj = zone.get("connected_objects")
         for obj_serial in zone_obj:
             obj_zone_names[obj_serial] = zone.get("title")
             obj_zone_ids[obj_serial] = zone.get("id")
+        if (
+            "last_presence_detected" in zone.keys()
+            and zone["last_presence_detected"] != None
+        ):
+            last_pres.append(
+                ComapLastPresenceSensor(
+                    coordinator=coordinator, zone_id=zone.get("id"), zone_name=zone.get("title")
+                )
+            )
 
     next_instr = [
         NextInstructionSensor(coordinator, zone)
@@ -53,7 +64,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         for device_sensor in connected_objects
     ]
 
-    sensors = batt_sensors + housing_sensors + device_sensors + next_instr
+    sensors = batt_sensors + housing_sensors + device_sensors + next_instr + last_pres
 
     async_add_entities(sensors, True)
 
@@ -130,8 +141,43 @@ class NextInstructionSensor(CoordinatorEntity, SensorEntity):
         return self.zone_id + "_next_instruction"
     
     
-        
+class ComapLastPresenceSensor(CoordinatorEntity, SensorEntity):
+    def __init__(self, coordinator, zone_id, zone_name):
+        super().__init__(coordinator)
+        self.coordinator = coordinator
+        self.zone_id = zone_id
+        self.zone_name = zone_name
+        self._attr_device_class = SensorDeviceClass.TIMESTAMP
+        self._name = coordinator.data["housing"].get("name") + " " + zone_name + " Last presence"
+        self._id = coordinator.data["housing"].get("id") + "_" + zone_id + "_last_presence"
+        self._is_on = None
 
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            identifiers={
+                # Serial numbers are unique identifiers within a specific domain
+                (DOMAIN, self.zone_id)
+            },
+            name=self.zone_name,
+            manufacturer="comap",
+        )
+
+    @property
+    def name(self):
+        return self._name
+    
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._id
+    
+    @property
+    def state(self):
+        thermal_details = self.coordinator.data["thermal_details"]
+        zone = get_zone_infos(self.zone_id, thermal_details)
+        return zone.get("last_presence_detected")
 
 class ComapBatterySensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator, batt_sensor):
