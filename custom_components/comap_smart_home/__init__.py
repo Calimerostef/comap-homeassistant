@@ -36,63 +36,86 @@ async def async_setup_entry(
     async def async_fetch_data():
         try:
             data = {}
-            data["temperatures"] = await api_client.get_custom_temperatures()
-            data["housing"] = await api_client.async_gethousing_data()
+            temperatures = await api_client.get_custom_temperatures()
+            housing = await api_client.async_gethousing_data()
+            connected_objects = await api_client.get_housing_connected_objects()
             thermal_details = await api_client.get_thermal_details()
-            for zone in thermal_details["zones"]:
-                zone["heating_system_state"] = thermal_details["heating_system_state"]
-            data["thermal_details"] = thermal_details
-            data["connected_objects"] = await api_client.get_housing_connected_objects()
-            data["schedules"] = await api_client.get_schedules()
-            data["programs"] = await api_client.get_programs()
-            data["active_program"] = await api_client.get_active_program()
-            data["comap_temperatures"] = [
+            
+            programs = await api_client.get_programs()
+            prglist = programs.get("programs")
+            parsed_programs = {}
+            active_program_name = None
+            for program in prglist:
+                parsed_programs.update({program["title"]: program["id"]})
+                if program["is_activated"]:
+                    active_program_name = program["title"]
+            active_program = await api_client.get_active_program()
+
+            schedules = await api_client.get_schedules()
+            parsed_schedules = {}
+            for schedule in schedules:
+                parsed_schedules.update({schedule["title"]: schedule["id"]})
+
+
+            comap_temperatures = [
                 {
                     "id": "night",
                     "name": "Nuit",
-                    "value": data["temperatures"]["night"],
+                    "value": temperatures["night"],
                     "icon": "mdi:weather-night"
                 },
                 {
                     "id": "away",
                     "name": "Absence",
-                    "value": data["temperatures"]["away"],
+                    "value": temperatures["away"],
                     "icon": "mdi:home-export-outline"
                 },
                 {
                     "id": "frost_protection",
                     "name": "Hors Gel",
-                    "value": data["temperatures"]["frost_protection"],
+                    "value": temperatures["frost_protection"],
                     "icon": "mdi:snowflake"
                 },
                 {
                     "id": "presence_1",
                     "name": "Présence 1",
-                    "value": data["temperatures"]["connected"]["presence_1"],
+                    "value": temperatures["connected"]["presence_1"],
                     "icon": "mdi:numeric-1-circle-outline"
                 },
                 {
                     "id": "presence_2",
                     "name": "Présence 2",
-                    "value": data["temperatures"]["connected"]["presence_2"],
+                    "value": temperatures["connected"]["presence_2"],
                     "icon": "mdi:numeric-2-circle-outline"
                 },
                 {
                     "id": "presence_3",
                     "name": "Présence 3",
-                    "value": data["temperatures"]["connected"]["presence_3"],
+                    "value": temperatures["connected"]["presence_3"],
                     "icon": "mdi:numeric-3-circle-outline"
                 },
                 {
                     "id": "presence_4",
                     "name": "Présence 4",
-                    "value": data["temperatures"]["connected"]["presence_4"],
+                    "value": temperatures["connected"]["presence_4"],
                     "icon": "mdi:numeric-4-circle-outline"
 
                 }
             ]
 
-            return data
+            return {
+                "temperatures": temperatures,
+                "housing" : housing,
+                "thermal_details": thermal_details,
+                "connected_objects": connected_objects,
+                "schedules": schedules,
+                "programs": programs,
+                "parsed_programs": parsed_programs,
+                "active_program": active_program,
+                "active_program_name" : active_program_name,
+                "parsed_schedules": parsed_schedules,
+                "comap_temperatures": comap_temperatures,
+            }
         except Exception as err:
             raise UpdateFailed(f"Error fetching data: {err}")
         

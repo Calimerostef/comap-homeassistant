@@ -56,9 +56,6 @@ class ZoneScheduleSelect(CoordinatorEntity, SelectEntity):
         self.zone_id = zone.get("id")
         self._attr_unique_id = "zone_mode_" + zone.get("id")
         self.zone_name = coordinator.data["housing"].get("name") + " " + zone.get("title")
-        schedules = self.coordinator.data["schedules"]
-        self.modes = self.parse_schedules(schedules)
-        self._options = self.list_schedules(schedules)
     
     @property
     def icon(self) -> str:
@@ -89,7 +86,11 @@ class ZoneScheduleSelect(CoordinatorEntity, SelectEntity):
     
     @property
     def options(self):
-        return self._options
+        list = [
+            lib
+            for lib in self.coordinator.data["parsed_schedules"]
+        ]
+        return list
     
     @property
     def current_option(self):
@@ -98,22 +99,10 @@ class ZoneScheduleSelect(CoordinatorEntity, SelectEntity):
         return self.get_active_schedule_name(schedules,self.zone_id,active_program)
 
     async def async_select_option(self, option: str) -> None:
-        schedule_id = self.modes.get(option)
+        schedule_id = self.coordinator.data["parsed_schedules"][option]
         await self.client.set_schedule(schedule_id,self.zone_id)
         self._attr_current_option = option
         await self.coordinator.async_request_refresh()
-
-    def list_schedules(self, r) -> list:
-        schedules = []
-        for schedule in r:
-            schedules.append(schedule["title"])
-        return schedules
-
-    def parse_schedules(self, r) -> dict[str, str]:
-        schedules = {}
-        for schedule in r:
-            schedules.update({schedule["title"]: schedule["id"]})
-        return schedules
 
     def get_active_schedule_name(self, schedules, zone_id, active_program) -> str:
         zones = active_program["zones"]
@@ -134,13 +123,6 @@ class ProgramSelect(CoordinatorEntity, SelectEntity):
         self._name = "Programme " + coordinator.data["housing"].get("name")
         self.device_name = coordinator.data["housing"].get("name")
         self._unique_id = self.housing + "program"
-        self._attr_options = []
-        self._attr_current_option = None
-        self.modes = {}
-
-        programs = coordinator.data["programs"].get("programs")
-        self._options = self.list_programs(programs)
-        self.modes = self.parse_programs(programs)
     
     @property
     def icon(self) -> str:
@@ -170,35 +152,22 @@ class ProgramSelect(CoordinatorEntity, SelectEntity):
     
     @property
     def options(self):
-        return self._options
+        list = [
+            lib
+            for lib in self.coordinator.data["parsed_programs"]
+        ]
+        return list
     
     @property
     def current_option(self):
-        programs = self.coordinator.data["programs"].get("programs")
-        return self.get_active_program_name(programs)
+        return self.coordinator.data["active_program_name"]
 
     async def async_select_option(self, option: str) -> None:
-        program_id = self.modes.get(option)
+        program_id = self.coordinator.data["parsed_programs"][option]
         await self.client.set_program(program_id)
         self._attr_current_option = option
         await self.coordinator.async_request_refresh()
-    
 
-    def list_programs(self, prglist) -> list:
-        programs = []
-        for program in prglist:
-            programs.append(program["title"])
-        return programs
 
-    def parse_programs(self, prglist) -> dict[str, str]:
-        programs = {}
-        for schedule in prglist:
-            programs.update({schedule["title"]: schedule["id"]})
-        return programs
 
-    def get_active_program_name(self,prglist) -> str:
-        active_program = None
-        for program in prglist:
-            if program["is_activated"]:
-                    active_program = program["title"] 
-        return active_program
+
