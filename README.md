@@ -24,6 +24,7 @@ It will set up :
     * a thermostat sensor providing more information about the zone thermostat
     * a switch to display and turn-off temporary instructions
     * a sensor to display next instruction
+    * a date/time sensor with last presence detected for each zone with presence detection
 
 Features :
 
