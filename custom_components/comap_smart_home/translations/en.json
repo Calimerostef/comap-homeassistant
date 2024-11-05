@@ -7,7 +7,8 @@
                 "data": {
                     "username": "Username",
                     "password": "Password",
-                    "comap_sensor_scan_interval": "Data polling interval (minutes)"
+                    "comap_sensor_scan_interval": "Data polling interval (minutes)",
+                    "comap_presence_interval": "Absence duration (minutes) before setting absence sensor as absent"
                 }
             }
         },
@@ -19,7 +20,8 @@
         "step": {
             "user": {
                 "data": {
-                    "comap_sensor_scan_interval": "Data polling interval (minutes)"
+                    "comap_sensor_scan_interval": "Data polling interval (minutes)",
+                    "comap_presence_interval": "Absence duration (minutes) before setting absence sensor as absent"
                 }
             }
         }

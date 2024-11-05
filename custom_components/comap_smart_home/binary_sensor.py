@@ -10,8 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .api import ComapClient
-from .const import DOMAIN
+from .const import DOMAIN, COMAP_PRESENCE_INTERVAL
 from .comap_functions import get_zone_infos
 
 async def async_setup_entry(
@@ -19,9 +18,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities,
 ) -> None:
-    
-    config = config_entry.data
-    client = ComapClient(username=config[CONF_USERNAME], password=config[CONF_PASSWORD])
+
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
 
     zones = coordinator.data["thermal_details"].get("zones")
@@ -34,24 +31,23 @@ async def async_setup_entry(
         ):
             entities.append(
                 ComapPresenceSensor(
-                    coordinator=coordinator, zone_id=zone.get("id"), zone_name=zone.get("title"), client=client
+                    coordinator=coordinator, zone_id=zone.get("id"), zone_name=zone.get("title"), config_entry=config_entry
                 )
             )
     # entities: entities
     async_add_entities(entities)
 
 class ComapPresenceSensor(CoordinatorEntity,BinarySensorEntity):
-    def __init__(self, coordinator, zone_id, zone_name, client):
+    def __init__(self, coordinator, zone_id, zone_name, config_entry):
         super().__init__(coordinator)
         self.coordinator = coordinator
-        self.client = client
         self.zone_id = zone_id
         self.zone_name = zone_name
+        self.config_entry = config_entry  # Config entry pour accéder aux options
         self._attr_device_class = BinarySensorDeviceClass.OCCUPANCY
         self._name = zone_name + " presence"
         self._id = coordinator.data["housing"].get("id") + "_" + zone_id + "_presence"
         self._is_on = None
-        self.attrs = dict()
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -88,15 +84,14 @@ class ComapPresenceSensor(CoordinatorEntity,BinarySensorEntity):
         zone = get_zone_infos(self.zone_id, thermal_details)
         last_presence_detected = zone.get("last_presence_detected")
         return {
-            "last_presence_detected": last_presence_detected
+            "last_presence_detected": last_presence_detected,
+            "presence_interval": self.config_entry.options.get(COMAP_PRESENCE_INTERVAL)
         }
 
-    @staticmethod
-    def is_occupied(timestamp):
+
+    def is_occupied(self, timestamp):
         now = datetime.now(timezone.utc)
         presence = datetime.fromisoformat(timestamp)
-        two_minutes = timedelta(minutes=2)
-        if now - presence < two_minutes:
-            return True
-        else:
-            return False
+        presence_interval = self.config_entry.options.get(COMAP_PRESENCE_INTERVAL, 60)
+        interval_timedelta = timedelta(minutes=presence_interval)
+        return now - presence < interval_timedelta

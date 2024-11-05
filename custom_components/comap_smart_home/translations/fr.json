@@ -7,7 +7,8 @@
                 "data": {
                     "username": "Login",
                     "password": "Mot de passe",
-                    "comap_sensor_scan_interval": "Intervalle de rafraîchissement des données (minutes)"
+                    "comap_sensor_scan_interval": "Intervalle de rafraîchissement des données (minutes)",
+                    "comap_presence_interval": "Délai (en minutes) avant de considérer une absence de la maison"
                 }
             }
         },
@@ -19,7 +20,8 @@
         "step": {
             "user": {
                 "data": {
-                    "comap_sensor_scan_interval": "Intervalle de rafraîchissement des données (minutes)"
+                    "comap_sensor_scan_interval": "Intervalle de rafraîchissement des données (minutes)",
+                    "comap_presence_interval": "Délai (en minutes) avant de considérer une absence de la maison"
                 }
             }
         }
