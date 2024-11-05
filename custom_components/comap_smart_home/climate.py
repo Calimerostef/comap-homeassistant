@@ -190,7 +190,7 @@ class ComapZoneThermostat(CoordinatorEntity,ClimateEntity):
         await self.client.set_temporary_instruction(
             self.zone_id, self.map_comap_mode(preset_mode)
         )
-        #await self.async_update()
+        await self.coordinator.async_request_refresh()
 
     async def async_reset_temporary (self):
         await self.client.remove_temporary_instruction(self.zone_id)

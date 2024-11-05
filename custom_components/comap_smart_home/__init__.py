@@ -40,7 +40,8 @@ async def async_setup_entry(
             housing = await api_client.async_gethousing_data()
             connected_objects = await api_client.get_housing_connected_objects()
             thermal_details = await api_client.get_thermal_details()
-            
+            for zone in thermal_details.get("zones"):
+                zone["heating_system_state"] = thermal_details["heating_system_state"]
             programs = await api_client.get_programs()
             prglist = programs.get("programs")
             parsed_programs = {}
