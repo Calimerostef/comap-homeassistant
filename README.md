@@ -25,6 +25,7 @@ It will set up :
     * a switch to display and turn-off temporary instructions
     * a sensor to display next instruction
     * a date/time sensor with last presence detected for each zone with presence detection
+    * a time entity to cusomize temporary instruction duration
 
 Features :
 
