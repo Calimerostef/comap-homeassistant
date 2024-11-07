@@ -4,11 +4,11 @@ import logging
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.const import PERCENTAGE, DEVICE_CLASS_TIMESTAMP
+from homeassistant.const import PERCENTAGE
 
 
 from .const import DOMAIN
-from .comap_functions import get_connected_object_zone_infos, get_object_infos, get_now, get_zone_infos, DateToHHMM, ModeToIcon
+from .comap_functions import get_connected_object_zone_infos, get_object_infos, get_now, get_zone_infos, DateToHHMM, ModeToIcon, build_name
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -77,10 +77,15 @@ class NextInstructionSensor(CoordinatorEntity, SensorEntity):
         self.zone_id = zone.get("id")
         self.zone_name = self.housing_name + " " + zone.get("title")
         self.is_pilot_wire = zone.get("set_point_type") == "pilot_wire"
+        self._name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            zone_name=zone.get("title"),
+            entity_name="Next instruction"
+        )
 
     @property
     def name(self):
-        return self.zone_name + " Next instruction"
+        return self._name
     
     @property
     def icon(self):
@@ -139,8 +144,7 @@ class NextInstructionSensor(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
         return self.zone_id + "_next_instruction"
-    
-    
+        
 class ComapLastPresenceSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator, zone_id, zone_name):
         super().__init__(coordinator)
@@ -148,7 +152,11 @@ class ComapLastPresenceSensor(CoordinatorEntity, SensorEntity):
         self.zone_id = zone_id
         self.zone_name = zone_name
         self._attr_device_class = SensorDeviceClass.TIMESTAMP
-        self._name = coordinator.data["housing"].get("name") + " " + zone_name + " Last presence"
+        self._name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            zone_name=zone_name,
+            entity_name="Last presence"
+        )
         self._id = coordinator.data["housing"].get("id") + "_" + zone_id + "_last_presence"
         self._is_on = None
 
@@ -187,9 +195,11 @@ class ComapBatterySensor(CoordinatorEntity, SensorEntity):
         self.model = batt_sensor.get("model")
         obj_zone_infos = get_connected_object_zone_infos(self.sn, coordinator.data["thermal_details"])
         self.zone_name = obj_zone_infos.get("title")
-        if self.zone_name is None:
-            self.zone_name = ""
-        self._name = "Batterie " + self.model + " " + self.zone_name + " " +  coordinator.data["housing"].get("name")
+        self._name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            zone_name=self.zone_name,
+            entity_name="Battery"
+        )
         self.zone_id = obj_zone_infos.get("id")
         if self.zone_id is None:
             self.zone_id = self.housing
@@ -247,7 +257,10 @@ class ComapHousingSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self.coordinator = coordinator
         self.housing_id = coordinator.data["housing"].get("id")
-        self._name = "Infos " + coordinator.data["housing"].get("name")
+        self._name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            entity_name="Info"
+        )
         self._state = self._state = coordinator.data["thermal_details"].get("services_available")
         self.attrs = {}
         self._id = self.housing_id + "_sensor"
@@ -304,8 +317,11 @@ class ComapDeviceSensor(CoordinatorEntity, SensorEntity):
         self.zone_name = obj_zone_infos.get("title")
         if self.zone_name is None:
             self.zone_name = ""
-        self._name = self.model.capitalize() + " " + self.zone_name
-
+        self._name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            zone_name=obj_zone_infos.get("title"),
+            entity_name=self.model.capitalize()
+        )
         self.zone_id = obj_zone_infos.get("id")
         if self.zone_id is None:
             self.zone_id = self.housing

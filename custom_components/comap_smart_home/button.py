@@ -6,6 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.button import ButtonEntity
+from .comap_functions import build_name
 
 from .const import (
     DOMAIN,
@@ -26,7 +27,10 @@ class RefreshButton(ButtonEntity, CoordinatorEntity):
     def __init__(self, coordinator):
         super().__init__(coordinator)
         self.coordinator = coordinator
-        self._attr_name = "Rafraîchir les données de " + coordinator.data["housing"].get("name")
+        self._attr_name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            entity_name=" Refresh data button"
+        )
         self.housing = coordinator.data["housing"].get("id")
         self.device_name = coordinator.data["housing"].get("name")
         self._unique_id = self.housing + "refresh"

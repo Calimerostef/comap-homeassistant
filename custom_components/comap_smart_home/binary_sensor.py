@@ -11,7 +11,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, COMAP_PRESENCE_INTERVAL
-from .comap_functions import get_zone_infos
+from .comap_functions import get_zone_infos, build_name
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -45,7 +45,11 @@ class ComapPresenceSensor(CoordinatorEntity,BinarySensorEntity):
         self.zone_name = zone_name
         self.config_entry = config_entry  # Config entry pour accéder aux options
         self._attr_device_class = BinarySensorDeviceClass.OCCUPANCY
-        self._name = zone_name + " presence"
+        self._name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            zone_name=zone_name,
+            entity_name="Presence"
+        )
         self._id = coordinator.data["housing"].get("id") + "_" + zone_id + "_presence"
         self._is_on = None
 

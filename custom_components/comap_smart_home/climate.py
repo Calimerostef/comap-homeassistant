@@ -26,7 +26,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 
 from .api import ComapClient
 from .const import DOMAIN
-from .comap_functions import get_zone_infos
+from .comap_functions import get_zone_infos, build_name
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,6 +46,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities,
 ):
+    
     config = config_entry.data
     client = ComapClient(username=config[CONF_USERNAME], password=config[CONF_PASSWORD])
 
@@ -59,7 +60,7 @@ async def async_setup_entry(
         zone.update({"heating_system_state": heating_system_state})
 
     zones = [
-        ComapZoneThermostat(coordinator, client, zone, assist_compatibility)
+        ComapZoneThermostat(hass, coordinator, client, zone, assist_compatibility)
         for zone in housing_details.get("zones")
     ]
 
@@ -82,8 +83,9 @@ class ComapZoneThermostat(CoordinatorEntity,ClimateEntity):
     _attr_hvac_mode: HVACMode | None
     _attr_hvac_action: HVACAction | None
 
-    def __init__(self, coordinator, client, zone, assist_compatibility):
+    def __init__(self, hass, coordinator, client, zone, assist_compatibility):
         super().__init__(coordinator)
+        self.hass = hass
         self.coordinator = coordinator
         self._assist_compatibility = assist_compatibility
         self._attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT]
@@ -92,7 +94,11 @@ class ComapZoneThermostat(CoordinatorEntity,ClimateEntity):
         self.client = client
         self.zone_id = zone.get("id")
         self.zone_name = coordinator.data["housing"].get("name") + " " + zone.get("title")
-        self._name = "Thermostat " + coordinator.data["housing"].get("name") + " zone " + zone.get("title")
+        self._name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            zone_name = zone.get("title"),
+            entity_name="Thermostat"
+        )
         self.set_point_type = zone.get("set_point_type")
         if (self.set_point_type == "custom_temperature") | (
             self.set_point_type == "defined_temperature"
@@ -104,7 +110,7 @@ class ComapZoneThermostat(CoordinatorEntity,ClimateEntity):
             self._attr_supported_features = ClimateEntityFeature.PRESET_MODE
         self._enable_turn_on_off_backwards_compatibility = False
 
-#fixes
+#Données fixes
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -129,7 +135,7 @@ class ComapZoneThermostat(CoordinatorEntity,ClimateEntity):
         """Return the unique ID of the sensor."""
         return self.zone_id
 
-#variables
+#Données variables
 
     @property
     def current_temperature(self) -> float:
@@ -183,12 +189,14 @@ class ComapZoneThermostat(CoordinatorEntity,ClimateEntity):
         next_timeslot = zone_data["next_timeslot"]
         attrs["next_timeslot"] = next_timeslot["begin_at"]
         attrs["next_instruction"] = next_timeslot["set_point"]["instruction"]
+        attrs["zone_id"] = self.zone_id
         return attrs
     
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
+        tempo = self.hass.data[self.zone_id + "_tempo_duration"]
         await self.client.set_temporary_instruction(
-            self.zone_id, self.map_comap_mode(preset_mode)
+            self.zone_id, self.map_comap_mode(preset_mode), tempo
         )
         await self.coordinator.async_request_refresh()
 
@@ -215,7 +223,8 @@ class ComapZoneThermostat(CoordinatorEntity,ClimateEntity):
             await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs) -> None:
-        await self.client.set_temporary_instruction(self.zone_id, kwargs["temperature"])
+        tempo = self.hass.data[self.zone_id + "_tempo_duration"]
+        await self.client.set_temporary_instruction(self.zone_id, kwargs["temperature"],tempo)
         await self.coordinator.async_request_refresh()
      
 

@@ -1,0 +1,13 @@
+set_temporary_instruction:
+  name: Set Custom Temperature
+  description: Change the target temperature for a specific entity.
+  fields:
+    entity_id:
+      description: The entity ID of the climate device.
+      example: climate.living_room
+    instruction:
+      description: instruction to set (temperature if thermostat / mode if pilot wire).
+      example: 22.5
+    duration:
+      description: duration in minutes
+      example: 120

@@ -5,7 +5,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.select import SelectEntity
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-
+from .comap_functions import build_name
 
 from homeassistant.const import (
     CONF_USERNAME,
@@ -52,7 +52,11 @@ class ZoneScheduleSelect(CoordinatorEntity, SelectEntity):
         self.coordinator = coordinator
         self.client = client
         self.housing = coordinator.data["housing"].get("id")
-        self._name = "Planning " + coordinator.data["housing"].get("name") + " zone " + zone.get("title")
+        self._name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            zone_name=zone.get("title"),
+            entity_name="Planning"
+        )
         self.zone_id = zone.get("id")
         self._attr_unique_id = "zone_mode_" + zone.get("id")
         self.zone_name = coordinator.data["housing"].get("name") + " " + zone.get("title")
@@ -120,7 +124,10 @@ class ProgramSelect(CoordinatorEntity, SelectEntity):
         self.coordinator = coordinator
         self.client = client
         self.housing = coordinator.data["housing"].get("id")
-        self._name = "Programme " + coordinator.data["housing"].get("name")
+        self._name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            entity_name="Program"
+        )
         self.device_name = coordinator.data["housing"].get("name")
         self._unique_id = self.housing + "program"
     
@@ -167,7 +174,3 @@ class ProgramSelect(CoordinatorEntity, SelectEntity):
         await self.client.set_program(program_id)
         self._attr_current_option = option
         await self.coordinator.async_request_refresh()
-
-
-
-

@@ -9,7 +9,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from .api import ComapClient
 from .const import DOMAIN
 
-from .comap_functions import get_zone_infos
+from .comap_functions import get_zone_infos, build_name
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -41,7 +41,10 @@ class ComapHousingOnOff(CoordinatorEntity,SwitchEntity):
         self.coordinator = coordinator
         self.client = client
         self.housing = coordinator.data["housing"].get("id")
-        self._name = coordinator.data["housing"].get("name")
+        self._name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            entity_name="Global switch"
+        )
         self._is_on = None
         self._attr_device_class = SwitchDeviceClass.SWITCH
         self._id = self.housing + "_on_off"
@@ -87,7 +90,10 @@ class ComapHousingHoliday(CoordinatorEntity, SwitchEntity):
         self.coordinator = coordinator
         self.client = client
         self.housing = coordinator.data["housing"].get("id")
-        self._name = "Holiday " + coordinator.data["housing"].get("name")
+        self._name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            entity_name="Holiday"
+        )
         self._is_on = None
         self._attr_device_class = SwitchDeviceClass.SWITCH
         self._extra_state_attributes = {}
@@ -143,7 +149,10 @@ class ComapHousingAbsence(CoordinatorEntity, SwitchEntity):
         self.coordinator = coordinator
         self.client = client
         self.housing = coordinator.data["housing"].get("id")
-        self._name = "Absence " + coordinator.data["housing"].get("name")
+        self._name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            entity_name="Absence"
+        )
         self._is_on = None
         self._attr_device_class = SwitchDeviceClass.SWITCH
         self._extra_state_attributes = {}
@@ -196,7 +205,11 @@ class ComapZoneTemporarySwitch(CoordinatorEntity, SwitchEntity):
         self.coordinator = coordinator
         self.client = client
         self.housing = coordinator.data["housing"].get("id")
-        self._name = "Temporary " + coordinator.data["housing"].get("name") + " " + zone.get("title")
+        self._name = build_name(
+            housing_name=coordinator.data["housing"].get("name"),
+            zone_name = zone.get("title"),
+            entity_name="Temporary"
+        )
         self._id = zone.get("id") + "_temporary"
         self.zone_name = zone.get("title")
         self.zone_id = zone.get("id")
