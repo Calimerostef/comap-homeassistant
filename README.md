@@ -40,7 +40,7 @@ Features :
 Services :
 * "Set Custom Temperature" :
   parameters :
-     - entity_id : the climete entity
+     - entity_id : the climate entity
      - instruction : the instruction to set (temperature if thermostat / mode if pilot_wire
      - duration : the instruction duration (in minutes)
 
