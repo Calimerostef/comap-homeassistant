@@ -19,7 +19,7 @@ from homeassistant.const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor", "climate", "switch", "select", "binary_sensor", "button", "number"]
+PLATFORMS = ["sensor", "climate", "switch", "select", "binary_sensor", "button", "number", "time"]
 
 
 async def async_setup_entry(
@@ -104,7 +104,7 @@ async def async_setup_entry(
                 }
             ]
 
-            return {
+            data = {
                 "temperatures": temperatures,
                 "housing" : housing,
                 "thermal_details": thermal_details,
@@ -117,6 +117,9 @@ async def async_setup_entry(
                 "parsed_schedules": parsed_schedules,
                 "comap_temperatures": comap_temperatures,
             }
+
+            return data
+        
         except Exception as err:
             raise UpdateFailed(f"Error fetching data: {err}")
         
@@ -138,6 +141,41 @@ async def async_setup_entry(
 
     # Charge les entités
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    # service
+
+    async def set_temporary_instruction_service(call):
+        """Handle the service call to set a custom temperature."""
+        entity_id = call.data["entity_id"]
+        instruction = call.data["instruction"]
+        duration = call.data["duration"]
+
+        entity = hass.states.get(entity_id)
+        if not entity:
+            raise ValueError(f"Entity {entity_id} not found")
+        
+        # Récupérer l'attribut `zone_id`
+        zone_id = entity.attributes.get("zone_id")
+        if not zone_id:
+            raise ValueError(f"zone_id for {entity_id} not found")
+
+        # Appeler l'API pour définir la nouvelle température
+        try:
+            await api_client.set_temporary_instruction(zone_id, instruction, duration)
+            _LOGGER.info(f"Successfully set {entity_id} temperature to {instruction}")
+        except Exception as err:
+            _LOGGER.error(f"Failed to set temperature: {err}")
+            raise ValueError("Unable to set instruction")
+
+        # Mettre à jour les données via le coordinateur
+        await coordinator.async_request_refresh()
+
+    # Enregistrer le service
+    hass.services.async_register(
+        DOMAIN,
+        "set_temporary_instruction",
+        set_temporary_instruction_service,
+    )
 
     return True
 
