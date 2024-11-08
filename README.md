@@ -37,6 +37,13 @@ Features :
 * Set program
 * Polling interval is customizable during istallation and can be changed using component configuration (a Home Assistant restart will be required after configuration change)
 
+Services :
+* "Set Custom Temperature" :
+  parameters :
+     - entity_id : the climate entity
+     - instruction : the instruction to set (temperature if thermostat / mode if pilot_wire
+     - duration : the instruction duration (in minutes)
+
 Does not support:
 
 * Mulitple housings
