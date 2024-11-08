@@ -13,6 +13,8 @@ from homeassistant.components.climate.const import (
     PRESET_AWAY,
     PRESET_COMFORT,
     PRESET_ECO,
+    PRESET_HOME,
+    PRESET_SLEEP,
 )
 
 from homeassistant.config_entries import ConfigEntry
@@ -38,6 +40,18 @@ PRESET_MODE_MAP = bidict(
         "comfort": PRESET_COMFORT,
         "comfort_minus1": "comfort -1",
         "comfort_minus2": "comfort -2",
+    }
+)
+
+PRESET_THERMO_MODE_MAP = bidict(
+    {
+        "night": PRESET_SLEEP,
+        "away": PRESET_AWAY,
+        "frost_protection": "Hors-gel",
+        "presence_1": "Présence 1",
+        "presence_2": "Présence 2",
+        "presence_3": "Présence 3",
+        "presence_4": "Présence 4"
     }
 )
 
@@ -104,11 +118,14 @@ class ComapZoneThermostat(CoordinatorEntity,ClimateEntity):
             self.set_point_type == "defined_temperature"
         ):
             self.zone_type = "thermostat"
-            self._attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
+
+            self._attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.PRESET_MODE
+            self._attr_preset_modes = self.get_comap_used_presets()
         if self.set_point_type == "pilot_wire":
             self.zone_type = "pilot_wire"
             self._attr_supported_features = ClimateEntityFeature.PRESET_MODE
         self._enable_turn_on_off_backwards_compatibility = False
+        self.choosen_thermo_preset = None
 
 #Données fixes
 
@@ -179,6 +196,11 @@ class ComapZoneThermostat(CoordinatorEntity,ClimateEntity):
             preset_mode = self.map_preset_mode(
                 zone_data.get("set_point").get("instruction")
             )
+        else:
+            preset_mode = self.map_thermo_preset_mode(
+                zone_data.get("set_point").get("instruction")
+            )
+            self.choosen_thermo_preset = None
         return preset_mode
 
     @property
@@ -195,9 +217,21 @@ class ComapZoneThermostat(CoordinatorEntity,ClimateEntity):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         tempo = self.hass.data[self.zone_id + "_tempo_duration"]
-        await self.client.set_temporary_instruction(
-            self.zone_id, self.map_comap_mode(preset_mode), tempo
-        )
+        if self.set_point_type == "pilot_wire":
+            await self.client.set_temporary_instruction(
+                self.zone_id, self.map_comap_mode(preset_mode), tempo
+            )
+        else:
+            if preset_mode == PRESET_AWAY:
+                await self.client.set_absence()
+            else:
+                temperature = self.get_comap_temperature(preset_mode)
+                self.choosen_thermo_preset = preset_mode
+                if temperature is None:
+                    return
+                await self.client.set_temporary_instruction(
+                    self.zone_id, temperature, tempo
+                )
         await self.coordinator.async_request_refresh()
 
     async def async_reset_temporary (self):
@@ -223,10 +257,19 @@ class ComapZoneThermostat(CoordinatorEntity,ClimateEntity):
             await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs) -> None:
+        self.choosen_thermo_preset = None
         tempo = self.hass.data[self.zone_id + "_tempo_duration"]
         await self.client.set_temporary_instruction(self.zone_id, kwargs["temperature"],tempo)
         await self.coordinator.async_request_refresh()
-     
+
+    def get_comap_used_presets(self):
+        comap_temperatures = self.coordinator.data["comap_temperatures"]
+        used_presets = []
+        for temperature in comap_temperatures:
+            if not temperature["value"] is None:
+                used_presets.append(PRESET_THERMO_MODE_MAP.get(temperature["id"]))
+        return used_presets
+    
 
     def map_hvac_mode(self, zone_data):
         heating_system_state = zone_data.get("heating_system_state")
@@ -259,9 +302,23 @@ class ComapZoneThermostat(CoordinatorEntity,ClimateEntity):
 
     def map_preset_mode(self, comap_mode):
         return PRESET_MODE_MAP.get(comap_mode)
+    
+    def map_thermo_preset_mode(self, comap_mode):
+        hass_mode = PRESET_THERMO_MODE_MAP.get(comap_mode)
+        if not self.choosen_thermo_preset is None:
+            return self.choosen_thermo_preset
+        return hass_mode
 
     def map_comap_mode(self, ha_mode):
         return PRESET_MODE_MAP.inverse[ha_mode]
+    
+    def get_comap_temperature(self, ha_mode):
+        comap_temperatures = self.coordinator.data["comap_temperatures"]
+        comap_preset = PRESET_THERMO_MODE_MAP.inverse[ha_mode]
+        for temperature in comap_temperatures:
+            if temperature["id"] == comap_preset:
+                return temperature["value"]
+        return None
 
     def get_target_temperature(self, instruction, set_point_type):
         target_temperature = None
