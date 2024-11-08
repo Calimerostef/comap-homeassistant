@@ -1,7 +1,7 @@
 {
     "domain": "comap_smart_home_for_home_assistant",
     "name": "Comap Smart Home for Home Assistant",
-    "version": "1.2.5",
+    "version": "1.2.6",
     "requirements": ["httpx","bidict"],
     "dependencies": [],
     "codeowners": ["@jhenninot"],
